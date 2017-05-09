@@ -25,6 +25,8 @@ def show_postID(post_id):
 # 可以使用url_for模块构造url
 with app.test_request_context():
     print(url_for('show_username',username='Joy Zhou'))
+    # 给css静态文件生成一个url
+    print(url_for('static',filename = 'style.css'))
 
 # http method :客户端想对请求的页面做什么
 # {GET：获取页面上的信息并发给我}，{POST：想在URL上发布新信息}，{HEAD:获取页面的消息头（与GET类似）}，
