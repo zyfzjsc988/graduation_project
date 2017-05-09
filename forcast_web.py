@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,url_for
+from flask import Flask,url_for,request
 
 app = Flask(__name__)
 
@@ -26,8 +26,19 @@ def show_postID(post_id):
 with app.test_request_context():
     print(url_for('show_username',username='Joy Zhou'))
 
-
-
+# http method :客户端想对请求的页面做什么
+# {GET：获取页面上的信息并发给我}，{POST：想在URL上发布新信息}，{HEAD:获取页面的消息头（与GET类似）}，
+# {PUT：类似POST会触发存储过程多次}，{DELETE：删除给定位置的信息}，{OPTIONS：自动处理}
+@app.route('/login',methods=['GET','POST','HEAD','PUT','DELETE'])
+def login():
+    if request.method == 'POST':
+        do_the_login()
+    else:
+        show_the_login_form()
+def do_the_login():
+    print('do the login')
+def show_the_login_form():
+    print('show the login form')
 
 
 
