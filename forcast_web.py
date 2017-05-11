@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,url_for,request
+from flask import Flask
+from flask import url_for
+from flask import request
+from flask import render_template
 
 app = Flask(__name__)
 
@@ -8,10 +11,7 @@ app = Flask(__name__)
 @app.route('/')
 def hello_world():
     return 'Hello World!'
-# host:5000/hello 打印出hello JOY!
-@app.route('/hello')
-def hello():
-    return 'Hello JOY!'
+
 
 # 使用变量URL ：<variable_name>作为命名参数进行传递
 @app.route('/user/<username>')
@@ -41,6 +41,17 @@ def do_the_login():
     print('do the login')
 def show_the_login_form():
     print('show the login form')
+
+
+# 模板渲染
+# 使用render_template() 来渲染模板
+# flask 会在templates文件夹里寻找模板hello.html，文件夹必须与该模块同级
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello(name = None):
+    return render_template('hello.html',name = name)
+
+
 
 
 
