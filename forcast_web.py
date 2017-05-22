@@ -1,32 +1,44 @@
-# -*- coding: utf-8 -*-
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, session, redirect, url_for
+from flask_bootstrap import Bootstrap
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField,SelectField
+from wtforms.validators import Required,AnyOf
 
-# 配置数据库
-username = 'root'
-password = 'password'
-hostname = 'localhost:3306'
-dbname = 'flownn'
 app = Flask(__name__)
+# 使用密钥防止外站攻击
+app.config['SECRET_KEY'] = 'hard to guess string'
+bootstrap = Bootstrap(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://%s:%s@%s/%s' % (username,password,hostname,dbname)
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+# 表单类
+class SelectForm(FlaskForm):
+    place = SelectField("地点",choices=[("place1", "place1")])
+    type = SelectField("评判标准",choices=[("type1", "type1"),("type2", "type2")])
 
-db = SQLAlchemy(app)
+    # place = StringField("地点")
+    # type = StringField("评判标准")
+    submit = SubmitField("预定")
 
-# 定义模型
-class Modelgrade(db.Model):
-    __tablename__ = 'modelgrade'
-    nnname = db.Column(db.String(45),primary_key=True)
-    placename = db.Column(db.String(45),primary_key=True)
-    losstype = db.Column(db.String(45),primary_key=True)
-    opttype = db.Column(db.String(45),primary_key=True)
-    train_loss = db.Column(db.Float)
-    train_acc = db.Column(db.Float)
-    test_acc = db.Column(db.Float)
-    train_loss = db.Column(db.Float)
-    activation = db.Column(db.String(45),primary_key=True)
-    dropout = db.Column(db.Boolean,primary_key=True)
 
-    def __repr__(self):
-        return '<modelgrade %r_%r>' % (self.nnname,self.losstype)
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    form = SelectForm()
+    if form.validate_on_submit():
+        # 提交表单后重定向到index函数
+        session['place'] = form.place.data
+        session['type'] = form.type.data
+        return redirect(url_for('index'))
+    return render_template('show_all_flask.html', form=form, place=session.get('place'),type=session.get('type'))
+
+
+if __name__ == '__main__':
+    app.run()
