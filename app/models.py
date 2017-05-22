@@ -16,6 +16,7 @@ from . import db
 # 定义模型与数据库的表对应
 class Modelgrade(db.Model):
     __tablename__ = 'modelgrade'
+    # 字段名称必须一致
     nnname = db.Column(db.String(45),primary_key=True)
     placename = db.Column(db.String(45),primary_key=True)
     losstype = db.Column(db.String(45),primary_key=True)
@@ -26,6 +27,7 @@ class Modelgrade(db.Model):
     train_loss = db.Column(db.Float)
     activation = db.Column(db.String(45),primary_key=True)
     dropout = db.Column(db.Boolean,primary_key=True)
+    placeno = db.Column(db.String(45), primary_key=True)
     # 没有外键也没有表之间的关联关系
 
     def __repr__(self):

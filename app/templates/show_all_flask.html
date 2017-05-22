@@ -6,7 +6,7 @@
     <div class="page-header">
         <h1>{% if place %}{{ place }}{% endif %}!</h1>
         <h1>{% if type %}{{ type }}{% endif %}!</h1>
-        <h1>{{ log }}</h1>
+        <h1>{% if log %}{% for item in log %}{{ item }}<br/>{% endfor %}{% endif %}</h1>
     </div>
     {{ wtf.quick_form(form) }}
 
