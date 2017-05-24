@@ -51,19 +51,11 @@ class Predict(object):
         self.weights_path = weights_path
 
     def train_and_predict(self):
-        # 训练集和测试集加载
-        data_matrix = pd.read_csv(self.matrix_path,encoding='utf-8',header=0,index_col=0)
-        target = data_matrix.values[:, :-1]
-        tag = data_matrix.values[:, -1]
-        X_train, Y_train, X_test, Y_test = separate_train_and_test(target, tag)
-
-        # model加载
-        model = model_from_json(open(self.model_path, 'r', encoding='utf-8').read())
-        model.load_weights(self.weights_path)
+        print("-----2----")
+        print(self.matrix_path)
+        print(self.history_path)
+        print(self.model_path)
+        print(self.weights_path)
         history = json.load(open(self.history_path, 'r', encoding='utf-8'))
-
-        X = target[:, :-1]
-        predicted = model.predict(X)
-        predicted = np.reshape(predicted, (predicted.size,))
-        Y = target[:, -1]
-        return model,X,predicted,Y
+        print(history)
+        return history

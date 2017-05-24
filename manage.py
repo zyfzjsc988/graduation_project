@@ -13,7 +13,6 @@
 """
 import os
 from app import create_app, db
-from app.models import Modelgrade
 
 # 配置app
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')

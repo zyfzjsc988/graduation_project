@@ -14,21 +14,33 @@
 from . import db
 
 # 定义模型与数据库的表对应
-class Modelgrade(db.Model):
-    __tablename__ = 'modelgrade'
-    # 字段名称必须一致
-    nnname = db.Column(db.String(45),primary_key=True)
-    placename = db.Column(db.String(45),primary_key=True)
-    losstype = db.Column(db.String(45),primary_key=True)
-    opttype = db.Column(db.String(45),primary_key=True)
-    train_loss = db.Column(db.Float)
-    train_acc = db.Column(db.Float)
-    test_acc = db.Column(db.Float)
-    train_loss = db.Column(db.Float)
-    activation = db.Column(db.String(45),primary_key=True)
-    dropout = db.Column(db.Boolean,primary_key=True)
-    placeno = db.Column(db.String(45), primary_key=True)
-    # 没有外键也没有表之间的关联关系
+class Place(db.Model):
+    __tablename__='place'
+    id =db.Column(db.String(4),primary_key=True)
+    placename = db.Column(db.String(45))
 
-    def __repr__(self):
-        return '<modelgrade %r_%r>' % (self.nnname,self.losstype)
+class Modelinfo(db.Model):
+    __tablename__='modelinfo'
+#     表结构
+
+    id = db.Column(db.Integer, primary_key=True)
+    modelname = db.Column(db.String(256),
+                          db.ForeignKey('modelhistory.modelname',ondelete='CASCADE', onupdate='CASCADE'))
+    trainloss = db.Column(db.Float)
+    trainaccuracy = db.Column(db.Float)
+    testloss = db.Column(db.Float)
+    testaccuracy = db.Column(db.Float)
+
+class Modelhistory(db.Model):
+    __tablename__ = 'modelhistory'
+    #     表结构
+
+    id = db.Column(db.Integer, primary_key=True)
+    modelname = db.Column(db.String(256))
+    epoch = db.Column(db.Integer)
+    loss = db.Column(db.Float)
+    accuracy = db.Column(db.Float)
+
+    #   一对多关系
+    models = db.relationship('Modelinfo')
+

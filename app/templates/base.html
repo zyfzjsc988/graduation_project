@@ -28,3 +28,8 @@
     {% block page_content %}{% endblock %}
 </div>
 {% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <script src="{{ url_for('static',filename='js/d3.v3.js') }}"></script>
+{% endblock %}

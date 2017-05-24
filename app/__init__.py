@@ -31,6 +31,7 @@ def create_app(config_name):
     # 附加路由和自定义的错误页面
     # 使用蓝本定义路由，在蓝本中定义的路由处于休眠状态，注册到程序上后才可用
     from .main import main as main_blueprint
+
     app.register_blueprint(main_blueprint)
 
     print("success")

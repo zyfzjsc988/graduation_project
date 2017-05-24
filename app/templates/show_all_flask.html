@@ -2,12 +2,91 @@
 {% block title %} 杭州地铁客流预测系统 {% endblock %}
 {% import "bootstrap/wtf.html" as wtf %}
 {% block page_content %}
-
-    <div class="page-header">
-        <h1>{% if place %}{{ place }}{% endif %}!</h1>
-        <h1>{% if type %}{{ type }}{% endif %}!</h1>
-        <h1>{% if log %}{% for item in log %}{{ item }}<br/>{% endfor %}{% endif %}</h1>
-    </div>
     {{ wtf.quick_form(form) }}
+    <h2>{% if matrix %}{{ matrix }}{% endif %}</h2>
+    <div class="panel panel-primary">
+        <div class="panel-heading">对比结果</div>
+        <div class="panel-body"></div>
+    </div>
 
+
+
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+
+    <script>
+
+        var matrix;
+        function showdata() {
+             //Width and height
+			var w = 2000;
+			var h = 500;
+			var barPadding = 1;
+			var dataset = matrix;
+
+			//Create SVG element
+			var svg = d3.select(".panel-body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+			svg.selectAll("rect")
+			   .data(dataset)
+			   .enter()
+			   .append("rect")
+			   .attr("x", function(d, i) {
+			   		return i * (w / dataset.length);
+			   })
+			   .attr("y", function(d) {
+			   		return h - (parseInt(d.实际人数) * 20);
+			   })
+			   .attr("width", w / dataset.length - barPadding)
+			   .attr("height", function(d) {
+			   		return parseInt(d.实际人数) * 20;
+			   })
+			   .attr("fill", function(d) {
+					return "rgb(0, 0, " + (parseInt(d.实际人数) * 10) + ")";
+			   });
+
+{#			svg.selectAll("text")#}
+{#			   .data(dataset)#}
+{#			   .enter()#}
+{#			   .append("text")#}
+{#			   .text(function(d) {#}
+{#			   		return d.实际人数;#}
+{#			   })#}
+{#			   .attr("text-anchor", "middle")#}
+{#			   .attr("x", function(d, i) {#}
+{#			   		return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;#}
+{#			   })#}
+{#			   .attr("y", function(d) {#}
+{#			   		return h - (parseInt(d.实际人数) * 20) + 14;#}
+{#			   })#}
+{#			   .attr("font-family", "sans-serif")#}
+{#			   .attr("font-size", "11px")#}
+{#			   .attr("fill", "white");#}
+
+        }
+
+        var matrix_path = jQuery('h2').text();
+        d3.csv(matrix_path,function (data) {
+            console.log(data)
+            matrix = data;
+            showdata()
+        });
+
+        var history_path = 'static/output/history_0116_BP_mae_sgd_relu_0.json';
+
+
+
+    </script>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+
+    </style>
 {% endblock %}
