@@ -8,7 +8,7 @@
     <div class="panel panel-primary">
         <div class="panel-heading">对比结果</div>
         <div class="panel-body">
-            <svg width="2060" height="500"></svg>
+            <svg width="1200" height="25000"></svg>
 
         </div>
     </div>
@@ -27,21 +27,21 @@
 
         //创建画布
         var svg = d3.select("svg"),
-            margin = {top: 20, right: 80, bottom: 30, left: 50},
+            margin = {top: 20, right: 200, bottom: 30, left: 50},
             width = svg.attr("width") - margin.left - margin.right,
             height = svg.attr("height") - margin.top - margin.bottom,
             //g 元素是分组
             g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        var x = d3.scaleTime().range([0, width]),//x比例尺的范围
-            y = d3.scaleLinear().range([height, 0]),//y比例尺的范围
+        var x = d3.scaleTime().range([0, height]),//x比例尺的范围
+            y = d3.scaleLinear().range([0, width]),//y比例尺的范围
             z = d3.scaleOrdinal(d3.schemeCategory10);//z是颜色维度，最多10种颜色
 
         //线条 样式是连贯样式，x为时间，y为对应的值，输入为读取的某一列
         var line = d3.line()
             .curve(d3.curveBasis)
-            .x(function(d) { return x(d.datetime); })
-            .y(function(d) { return y(d.temperature); });
+            .y(function(d) { return x(d.datetime); })
+            .x(function(d) { return y(d.temperature); });
 
         //请求一个csv文件，输入为url，处理函数为type：将日期和数值进行转换，回调函数：通过名称选取相应的列
         d3.csv("static/output/0116.csv", type, function(error, data) {
@@ -78,29 +78,48 @@
 
 
           var event = g.append("g")
-              .attr("class","event")
 
 
           //创建每个数据的事件监听，显示tab
-            event.selectAll(".bar")
+            var bar = event.selectAll("g")
               .data(dataset)
+                .attr("class","event")
               .enter()
-              .append("rect")
+                .append("g")
+                .attr("transform",function (d) {
+                    bar_x = 0;
+                    bar_y = x(d.datetime);
+                    return "translate("+bar_x+","+bar_y+")";
+                } );
+
+              bar.append("rect")
               .attr("class","bar")
-              .attr("x", function(d) { return x(d.datetime); })
-              .attr("y", 0)
-              .attr("width", function (d) {
-                  return width/dataset.length
-              })
-              .attr("height", height)
-              .attr("fill",d3.rgb(255,255,240))
-              .on("mouseenter",function (d) {
-                  event.select(".event-text")
-                      .text(d.datetime)
-              });
+              .attr("height", height/dataset.length)
+              .attr("width", width)
+              .attr("fill",d3.rgb(255,255,240));
+
+
+                bar.append("text")
+                .attr("x",width/2)
+                .attr("y",height/dataset.length-3)
+                .attr("fill",d3.rgb(255,255,240))
+                .text(function (d) {
+                    true_count = d.实际人数;
+
+                    return "实际人数："+true_count+" 晴："+d.晴;
+                });
+
+{#              .on("mouseenter",function (d) {#}
+{#                  event.select(".event-text")#}
+{#                      .text(d.datetime)#}
+{#                      .attr("x",width)#}
+{#                      .attr("y",function(d) { return x(d.datetime); })#}
+{#              });#}
+
+
             event.append("text")
                     .attr("class","event-text")
-                    .attr("x",0)
+                    .attr("x",width-100)
                     .attr("y",100)
                     .attr("fill",d3.rgb(0,0,0))
 
@@ -108,18 +127,19 @@
             //添加x轴
           g.append("g")
               .attr("class", "axis axis--x")
-              .attr("transform", "translate(0," + height + ")")//平移到下方
-              .call(d3.axisBottom(x).ticks(d3.timeDay.every(1)))
+              .attr("transform", "translate(0,0)")//平移到最左
+              .call(d3.axisLeft(x).ticks(d3.timeHour.every(1)))
               .selectAll("text")
-              .attr("transform", "rotate(45)");
+              .attr("transform", "rotate(0)");
             //添加Y轴
           g.append("g")
               .attr("class", "axis axis--y")
-              .call(d3.axisLeft(y))
+              .call(d3.axisTop(y))
             .append("text")
-              .attr("transform", "rotate(-90)")
-              .attr("y", 6)
-              .attr("dy", "0.71em")
+              .attr("transform", "rotate(0)")
+              .attr("x", width-50)
+              .attr("dy","1em")
+              .attr("font","10px")
               .attr("fill", "#000")
               .text("人数, （人）");
 
@@ -136,12 +156,22 @@
               .attr("d", function(d) {return line(d.values); })//这里调用到了上面定义的line
               .style("stroke", function(d) { return z(d.id); });
 
+          city.append("rect")
+              .attr("width",15)
+              .attr("height",15)
+              .attr("x",width - 120)
+              .attr("y",function (d) {
+                  return d.num * 30;
+              })
+              .attr("fill",function(d) { return z(d.id); })
+              .style("stroke", function(d) { return z(d.id); });
+
           city.append("text")
               .datum(function(d) { return {id: d.id, value: d.num };})
-              .attr("transform", function(d) { return "translate( 20  ,"+ d.value * 25+")"; })
+              .attr("transform", function(d) { return "translate( "+ (width-100) +" ,"+ (d.value * 30+7) +")"; })
               .attr("x", 3)
               .attr("dy", "0.35em")
-              .style("font", "20px sans-serif")
+              .style("font", "15px sans-serif")
               .style("stroke", function(d) { return z(d.id); })
               .text(function(d) { return d.id; });
 
@@ -171,10 +201,8 @@
     .axis--x path {
         display: none;
     }
-
-
-    .bar:hover {
-      fill: rgb(0,140,140);
+    .bar:hover{
+        fill:red;
     }
     .line {
       fill: none;
