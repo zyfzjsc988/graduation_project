@@ -4,10 +4,11 @@
 {% block page_content %}
     {{ wtf.quick_form(form) }}
     <h2>{% if matrix %}{{ matrix }}{% endif %}</h2>
+
     <div class="panel panel-primary">
         <div class="panel-heading">对比结果</div>
         <div class="panel-body">
-            <svg width="20600" height="500"></svg>
+            <svg width="2060" height="500"></svg>
 
         </div>
     </div>
@@ -21,52 +22,97 @@
 
     <script>
 
+        var dataset
+        var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");//时间格式
+
+        //创建画布
         var svg = d3.select("svg"),
             margin = {top: 20, right: 80, bottom: 30, left: 50},
             width = svg.attr("width") - margin.left - margin.right,
             height = svg.attr("height") - margin.top - margin.bottom,
+            //g 元素是分组
             g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+        var x = d3.scaleTime().range([0, width]),//x比例尺的范围
+            y = d3.scaleLinear().range([height, 0]),//y比例尺的范围
+            z = d3.scaleOrdinal(d3.schemeCategory10);//z是颜色维度，最多10种颜色
 
-        var x = d3.scaleTime().range([0, width]),
-            y = d3.scaleLinear().range([height, 0]),
-            z = d3.scaleOrdinal(d3.schemeCategory10);
-
+        //线条 样式是连贯样式，x为时间，y为对应的值，输入为读取的某一列
         var line = d3.line()
             .curve(d3.curveBasis)
             .x(function(d) { return x(d.datetime); })
             .y(function(d) { return y(d.temperature); });
 
+        //请求一个csv文件，输入为url，处理函数为type：将日期和数值进行转换，回调函数：通过名称选取相应的列
         d3.csv("static/output/0116.csv", type, function(error, data) {
           if (error) throw error;
+            dataset = data;
 
-          var cities = data.columns.slice(1).map(function(id) {
+          //筛选的列名array，之后要从服务器传入
+          var NNname = ["实际人数","0116_BP_msle_adam_relu_0"]
+            var i =0;
+            //构造出一个map放入cities中 cities:id,values,num
+          var cities = NNname.map(function(id) {
+              i++;
             return {
               id: id,
               values: data.map(function(d) {
                 return {datetime: d.datetime, temperature: d[id]};
-              })
+              }),
+                num:i
             };
           });
 
-          x.domain(d3.extent(data, function(d) { return d.datetime; }));
 
+            //x定义域
+          x.domain(d3.extent(data, function(d) { return d.datetime; }));
+            //y定义域
           y.domain([
             d3.min(cities, function(c) { return d3.min(c.values, function(d) { return d.temperature; }); }),
             d3.max(cities, function(c) { return d3.max(c.values, function(d) { return d.temperature; }); })
           ]);
-
+            //z定义域
           z.domain(cities.map(function(c) { return c.id; }));
 
+
+
+
+          var event = g.append("g")
+              .attr("class","event")
+
+
+          //创建每个数据的事件监听，显示tab
+            event.selectAll(".bar")
+              .data(dataset)
+              .enter()
+              .append("rect")
+              .attr("class","bar")
+              .attr("x", function(d) { return x(d.datetime); })
+              .attr("y", 0)
+              .attr("width", function (d) {
+                  return width/dataset.length
+              })
+              .attr("height", height)
+              .attr("fill",d3.rgb(255,255,240))
+              .on("mouseenter",function (d) {
+                  event.select(".event-text")
+                      .text(d.datetime)
+              });
+            event.append("text")
+                    .attr("class","event-text")
+                    .attr("x",0)
+                    .attr("y",100)
+                    .attr("fill",d3.rgb(0,0,0))
+
+
+            //添加x轴
           g.append("g")
               .attr("class", "axis axis--x")
               .attr("transform", "translate(0," + height + ")")//平移到下方
-              .call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickPadding(20))
+              .call(d3.axisBottom(x).ticks(d3.timeDay.every(1)))
               .selectAll("text")
-              .attr("transform", "rotate(90)")
-          ;
-
+              .attr("transform", "rotate(45)");
+            //添加Y轴
           g.append("g")
               .attr("class", "axis axis--y")
               .call(d3.axisLeft(y))
@@ -75,33 +121,42 @@
               .attr("y", 6)
               .attr("dy", "0.71em")
               .attr("fill", "#000")
-              .text("Temperature, ºF");
+              .text("人数, （人）");
+
+
 
           var city = g.selectAll(".city")
             .data(cities)
             .enter().append("g")
               .attr("class", "city");
 
+            {#   每条线的属性和文字#}
           city.append("path")
               .attr("class", "line")
-              .attr("d", function(d) { return line(d.values); })
+              .attr("d", function(d) {return line(d.values); })//这里调用到了上面定义的line
               .style("stroke", function(d) { return z(d.id); });
 
           city.append("text")
-              .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
-              .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+              .datum(function(d) { return {id: d.id, value: d.num };})
+              .attr("transform", function(d) { return "translate( 20  ,"+ d.value * 25+")"; })
               .attr("x", 3)
               .attr("dy", "0.35em")
-              .style("font", "10px sans-serif")
+              .style("font", "20px sans-serif")
+              .style("stroke", function(d) { return z(d.id); })
               .text(function(d) { return d.id; });
+
+
+
+
+
         });
 
-        function type(d, _, columns) {
-          d.datetime = parseTime(d.datetime);
-          console.log(d.datetime)
-          for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
-          return d;
-        }
+                function type(d, _, columns) {
+                  d.datetime = parseTime(d.datetime);
+                  for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+                  return d;
+                }
+
 
 
 
@@ -113,11 +168,14 @@
 {% block head %}
     {{ super() }}
     <style type="text/css">
-
     .axis--x path {
-      display: none;
+        display: none;
     }
 
+
+    .bar:hover {
+      fill: rgb(0,140,140);
+    }
     .line {
       fill: none;
       stroke: steelblue;
