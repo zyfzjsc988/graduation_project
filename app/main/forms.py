@@ -14,7 +14,7 @@
 from flask_wtf import FlaskForm
 from wtforms import SelectField, SubmitField
 
-# 提交表单
+# page1提交表单
 class SelectForm(FlaskForm):
     place = SelectField("地点",choices=[("place1", "place1")])
     type = SelectField("评判标准",
@@ -22,4 +22,8 @@ class SelectForm(FlaskForm):
                                 ("testaccuracy", "test_accuracy"),
                                 ("trainloss", "train_loss"),
                                 ("testloss", "test_loss")])
+    submit = SubmitField("提交")
+
+class SelectPlaceForm(FlaskForm):
+    place = SelectField("地点", choices=[("place1", "place1")])
     submit = SubmitField("提交")

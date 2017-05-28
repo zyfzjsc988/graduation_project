@@ -11,10 +11,10 @@
 @desc:
 蓝本中定义的程序业务逻辑路由
 """
-from flask import render_template, session, redirect, url_for, current_app,g,make_response
+from flask import render_template, session, redirect, url_for,make_response
 from ..models import Modelhistory,Modelinfo,Place,db
 from . import main
-from .forms import SelectForm
+from .forms import SelectForm,SelectPlaceForm
 import os
 history_file_path = "output/history"
 
@@ -46,12 +46,13 @@ def index():
         # 提交表单后重定向到index函数
         session['place'] = form.place.data
         session['type'] = form.type.data
-        session['log'] = []
         session['matrix_path'] = ""
+        session['BP_name'] = ""
+        session['placename'] = ""
+        print(form.place.data)
         # 查询BP中type的数值最高的
         query_BP_by_place = Modelinfo.query.filter(Modelinfo.modelname.like(form.place.data + '_BP_%')).order_by(
             db.desc(form.type.data)).first()
-        session['log'].append("query_BP_by_place.modelname:%s" % query_BP_by_place.modelname)
         # # 继续查询绑定查询到的模型的 预测信息
         # query_BPpredict_by_place = Predict.query.filter(Predict.modelname == query_BP_by_place.modelname).order_by(
         #     Predict.datetime).all()
@@ -75,11 +76,41 @@ def index():
         #     TRUE.append(query_true_by_place[k].peoplenum)
         #     BP.append(query_BPpredict_by_place[k].peoplenum)
         session['matrix_path'] = url_for('static',filename="output/%s.csv" % (form.place.data) )
-
+        session['BP_name'] = query_BP_by_place.modelname
+        session['placename'] = Place.query.filter(Place.id == form.place.data).first().placename
         # 在蓝本中需要url_for用（蓝本名.函数名）所以main.index 简写为.index
         return redirect(url_for('.index'))
 
     return render_template('show_all_flask.html',
-                           form=form,
+                           form=form,BP=session.get('BP_name'),
+                           place= session.get('placename'),
                            matrix=session.get('matrix_path'))
 
+# 详细信息页
+@main.route('/show',methods=['GET','POST'])
+def show_info():
+    # this page is aimed at compare BP with Elman
+
+    form = SelectPlaceForm()
+    form.place.choices = []
+    for item in Place.query.all():
+        form.place.choices.append((item.id, item.placename))
+
+
+    if form.validate_on_submit():
+        session['place'] = form.place.data
+        session['placename'] = Place.query.filter(Place.id == form.place.data).first().placename
+        session['pathlist'] =[]
+        BP_name_list = []
+        BP_list =  Modelinfo.query.filter(Modelinfo.modelname.like(form.place.data + '_BP_%')).all()
+        for item in BP_list:
+            BP_name_list.append(item.modelname)
+        session['pathlist']=BP_name_list
+        return redirect(url_for('.show_info'))
+
+
+    return render_template('show_all.html',
+                           form=form,
+                           placeno=session.get('place'),
+                           placename=session.get('placename'),
+                           pathlist=session.get('pathlist'))
