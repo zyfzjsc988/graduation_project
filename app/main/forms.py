@@ -17,11 +17,11 @@ from wtforms import SelectField, SubmitField
 # page1提交表单
 class SelectForm(FlaskForm):
     place = SelectField("地点",choices=[("place1", "place1")])
-    type = SelectField("评判标准",
-                       choices=[("trainaccuracy", "train_accuracy"),
-                                ("testaccuracy", "test_accuracy"),
-                                ("trainloss", "train_loss"),
-                                ("testloss", "test_loss")])
+    # type = SelectField("评判标准",
+    #                    choices=[("trainaccuracy", "train_accuracy"),
+    #                             ("testaccuracy", "test_accuracy"),
+    #                             ("trainloss", "train_loss"),
+    #                             ("testloss", "test_loss")])
     submit = SubmitField("提交")
 
 class SelectPlaceForm(FlaskForm):

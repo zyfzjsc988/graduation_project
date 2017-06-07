@@ -2,22 +2,119 @@
 {% block title %} 杭州地铁客流预测系统-所有模型 {% endblock %}
 {% import "bootstrap/wtf.html" as wtf %}
 {% block page_content %}
-{{ wtf.quick_form(form) }}
-    <h1>{{ placeno}}</h1>
-    <h1>{{ placename}}</h1>
-    <h1>{% if pathlist %}{% for path in pathlist %}{{ path }}{% endfor %}{% endif %}</h1>
+    {{ wtf.quick_form(form) }}
 
 
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>模型名称</th>
+            <th>train平均绝对误差</th>
+            <th>test平均绝对误差</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div id="model-compare" style="width:1200px;height:600px;"></div>
 {% endblock %}
 
 
 {% block body %}
     {{ super() }}
+    <script type="text/javascript">
+        var rangelist = [];
+        for(i=0;i<50;i++){rangelist.push(i+1);}
+        function showtable(dataset) {
+            var table = $('.table tbody')
+            for (var model in dataset) {
+                var arr = dataset[model].history.mean_absolute_error
+                table.prepend(
+                    "<tr><td>" + model + "</td><td>"
+                    + arr[arr.length-1]
+                    + "</td><td>" + dataset[model].test.mean_absolute_error
+                    + "</td></tr>")
+            }
+        }
 
-    <script>
+        function getlist(dataset) {
+            var list = [];
+            for (var modelname in dataset) {
+
+                list.push({
+                    name: modelname,
+                    type: 'line',
+                    data: dataset[modelname].history.mean_absolute_error,
+                    lineStyle: {
+                        normal: {
+                            width: 6,
+                            shadowColor: 'rgba(0,0,0,0.4)',
+                            shadowBlur: 10,
+                            shadowOffsetY: 10
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: false,
+                            position: 'top',
+                        }
+                    }
+                })
+            }
+            console.log(list)
+            return list
+        }
 
 
+        // 基于准备好的dom，初始化echarts实例
+        var chart = echarts.init(document.getElementById('model-compare'));
+        chart.setOption({
+            title: {},
+            tooltip: {},
+            legend: {},
+            xAxis: {},
+            yAxis: {}
+        });
 
 
+        $.get('static/output/history_0116.json').done(function (data) {
+            var dataset = JSON.parse(data);
+            showtable(dataset);
+
+            chart.hideLoading();
+
+            chart.setOption({
+                title: {
+                    text: '{{ placename }}模型训练过程'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                grid: {
+                    containLabel: true
+                },
+                legend: {
+                    data: Object.getOwnPropertyNames(dataset)
+                },
+                xAxis: {
+                    name: 'epoch',
+                    type: 'category',
+                    axisTick: {
+                        alignWithLabel: true
+                    },
+                    data: rangelist
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'mean_abs_error',
+                    min: 0.02,
+                    max: 0.13,
+                    position: 'left'
+
+                },
+
+                series: getlist(dataset)
+            });
+        });
     </script>
 {% endblock %}

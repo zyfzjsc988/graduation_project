@@ -7,7 +7,7 @@
     <div class="panel panel-primary">
         <div class="panel-heading">{{ place }}对比结果</div>
         <div class="panel-body">
-            <svg width="1200" height="25000"></svg>
+            <svg width="1200" height="5000"></svg>
 
         </div>
     </div>
@@ -22,10 +22,10 @@
     <script>
 
         var dataset;
-        var filepath = "{{ matrix }}"
-        var BP_name = "{{ BP }}"
-        console.log(filepath)
-        console.log(BP_name)
+        var filepath = "{{ matrix }}";
+        {#        var BP_name = "{{ BP }}"#}
+        console.log(filepath);
+        {#        console.log(BP_name)#}
 
         var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");//时间格式
 
@@ -40,196 +40,258 @@
         var x = d3.scaleTime().range([0, height]),//x比例尺的范围
             y = d3.scaleLinear().range([0, width]),//y比例尺的范围
             z = d3.scaleOrdinal(d3.schemeCategory10);//z是颜色维度，最多10种颜色
-            p = d3.scaleOrdinal(d3.schemeCategory20c );//用于显示日期
+        p = d3.scaleOrdinal(d3.schemeCategory20c);//用于显示日期
 
         //线条 样式是连贯样式，x为时间，y为对应的值，输入为读取的某一列
         var line = d3.line()
             .curve(d3.curveBasis)
-            .y(function(d) { return x(d.datetime); })
-            .x(function(d) { return y(d.temperature); });
+            .y(function (d) {
+                return x(d.datetime);
+            })
+            .x(function (d) {
+                return y(d.temperature);
+            });
 
-        if(filepath != ""&&filepath!=null){
+        //线面积图
+
+        var area = d3.area()
+            .curve(d3.curveBasis)
+            .y(function (d) {
+                return x(d.datetime);
+            })
+            .x0(y(0))
+            .x1(function (d) {
+                return y(d.temperature);
+            });
+
+        if (filepath != "" && filepath != null) {
             //请求一个csv文件，输入为url，处理函数为type：将日期和数值进行转换，回调函数：通过名称选取相应的列
-            d3.csv(filepath, type, function(error, data) {
-              if (error) throw error;
+            d3.csv(filepath, type, function (error, data) {
+                if (error) throw error;
                 dataset = data;
 
-              //筛选的列名array，之后要从服务器传入
-              var NNname = []
+                //筛选的列名array，之后要从服务器传入
+                var NNname = ['BP_NO', 'BP_YES', 'RNN_NO', 'RNN_YES','FRNN_NO', 'FRNN_YES', 'FBP_NO', 'FBP_YES'];
 
-                if(BP_name!=""&&BP_name!= null) NNname.push(BP_name);
-                var i =0;
+                {#                if(BP_name!=""&&BP_name!= null) NNname.push(BP_name);#}
+                var i = 0;
                 //构造出一个map放入cities中 cities:id,values,num
-              var cities = NNname.map(function(id) {
-                  i++;
-                return {
-                  id: id,
-                  values: data.map(function(d) {
-                    return {datetime: d.datetime, temperature: d[id]};
-                  }),
-                    num:i
-                };
-              });
+                var cities = NNname.map(function (id) {
+                    i++;
+                    return {
+                        id: id,
+                        values: data.map(function (d) {
+                            return {datetime: d.datetime, temperature: d[id]};
+                        }),
+                        num: i
+                    };
+                });
 
-            var truedata = {id:'实际人数',values:data.map(function(d) {
-                    return {datetime: d.datetime, temperature: d['实际人数']};
-                  })};
+                var truedata = {
+                    id: '实际人数', values: data.map(function (d) {
+                        return {datetime: d.datetime, temperature: d['实际人数']};
+                    })
+                };
+                var filterdata = {
+                    id: '滤波后人数', values: data.map(function (d) {
+                        return {datetime: d.datetime, temperature: d['滤波人数']};
+                    })
+                };
 
 
                 //x定义域
-              x.domain(d3.extent(data, function(d) { return d.datetime; }));
+                x.domain(d3.extent(data, function (d) {
+                    return d.datetime;
+                }));
                 //y定义域
-              y.domain([
-                d3.min(cities, function(c) { return d3.min(c.values, function(d) { return d.temperature; }); }),
-                d3.max(truedata.values, function(d) { return d.temperature; })
-              ]);
+                y.domain([
+                    d3.min(cities, function (c) {
+                        return d3.min(c.values, function (d) {
+                            return d.temperature;
+                        });
+                    }),
+{#                    d3.max(truedata.values, function (d) {#}
+{#                        return d.temperature;#}
+{#                    })#}
+                    25
+                ]);
                 //z定义域
-              z.domain(cities.map(function(c) { return c.id; }));
+                z.domain(cities.map(function (c) {
+                    return c.id;
+                }));
 
 
+                var event = g.append("g");
 
-              var event = g.append("g")
 
-
-              //创建每个数据的事件监听，显示tab
+                //创建每个数据的事件监听，显示tab
                 var bar = event.selectAll("g")
-                  .data(dataset)
-                  .enter()
-                        .append("g")
-                    .attr("class","event")
-                        .attr("transform",function (d) {
+                    .data(dataset)
+                    .enter()
+                    .append("g")
+                    .attr("class", "event")
+                    .attr("transform", function (d) {
                         bar_x = 0;
                         bar_y = x(d.datetime);
-                        return "translate("+bar_x+","+bar_y+")";
-                    } );
-
-                  bar.append("rect")
-                  .attr("class","bar")
-                  .attr("height", height/dataset.length)
-                  .attr("width", width)
-                  .attr("fill",function (d,i) {
-                      if (d.测试集 != 0) {return d3.rgb(0,153,153);}
-                      else{ return d3.rgb(255,240,153)};
-                  })
-                      .attr("stroke",function (d,i) {
-                          if(i%24==0){return d3.rgb(255,102,102)}
-                          else {return d3.rgb(255,240,153)};
-
-                      });
-
-
-                    bar.append("text")
-                    .attr("x",width/2)
-                    .attr("y",height/dataset.length-3)
-                    .attr("fill",d3.rgb(255,240,153))
-                    .text(function (d) {
-                        true_count = d.实际人数;
-
-                        return "实际人数："+true_count+" 晴："+d.晴;
+                        return "translate(" + bar_x + "," + bar_y + ")";
                     });
 
-    {#              .on("mouseenter",function (d) {#}
-    {#                  event.select(".event-text")#}
-    {#                      .text(d.datetime)#}
-    {#                      .attr("x",width)#}
-    {#                      .attr("y",function(d) { return x(d.datetime); })#}
-    {#              });#}
+                bar.append("rect")
+                    .attr("class", "bar")
+                    .attr("height", height / dataset.length)
+                    .attr("width", width)
+                    .attr("fill", function (d, i) {
+                        if (d.测试集 != 0) {
+                            return d3.rgb(255, 204, 204);
+                        }
+                        else {
+                            return d3.rgb(255, 255, 204)
+                        }
+
+                    })
+                    .attr("stroke", function (d, i) {
+                        if (i % 24 == 0) {
+                            return d3.rgb(255, 102, 102)
+                        }
+                        else {
+                            if (d.测试集 != 0) {
+                                return d3.rgb(255, 204, 204);
+                            }
+                            else {
+                                return d3.rgb(255, 255, 204)
+                            }
+                        }
+
+
+                    });
+
+                {##}
+                {#                bar.append("text")#}
+                {#                    .attr("x", width / 2)#}
+                {#                    .attr("y", height / dataset.length - 3)#}
+                {#                    .attr("fill", d3.rgb(255, 240, 153))#}
+                {#                    .text(function (d) {#}
+                {#                        true_count = d.实际人数;#}
+                {##}
+                {#                        return "实际人数：" + true_count + " 晴：" + d.晴;#}
+                {#                    });#}
+
+                {#              .on("mouseenter",function (d) {#}
+                {#                  event.select(".event-text")#}
+                {#                      .text(d.datetime)#}
+                {#                      .attr("x",width)#}
+                {#                      .attr("y",function(d) { return x(d.datetime); })#}
+                {#              });#}
 
 
                 event.append("text")
-                        .attr("class","event-text")
-                        .attr("x",width-100)
-                        .attr("y",100)
-                        .attr("fill",d3.rgb(0,0,0));
+                    .attr("class", "event-text")
+                    .attr("x", width - 100)
+                    .attr("y", 100)
+                    .attr("fill", d3.rgb(0, 0, 0));
 
 
                 //添加x轴
-              g.append("g")
-                  .attr("class", "axis axis--x")
-                  .attr("transform", "translate(0,0)")//平移到最左
-                  .call(d3.axisLeft(x).ticks(d3.timeHour.every(1)))
-                  .selectAll("text")
-                  .attr("transform", "rotate(0)");
+                g.append("g")
+                    .attr("class", "axis axis--x")
+                    .attr("transform", "translate(0,0)")//平移到最左
+                    .call(d3.axisLeft(x).ticks(d3.timeHour.every(4)))
+                    .selectAll("text")
+                    .attr("transform", "rotate(0)");
                 //添加Y轴
-              g.append("g")
-                  .attr("class", "axis axis--y")
-                  .call(d3.axisTop(y))
-                .append("text")
-                  .attr("transform", "rotate(0)")
-                  .attr("x", width-50)
-                  .attr("dy","1em")
-                  .attr("font","10px")
-                  .attr("fill", "#000")
-                  .text("人数, （人）");
+                g.append("g")
+                    .attr("class", "axis axis--y")
+                    .call(d3.axisTop(y))
+                    .append("text")
+                    .attr("transform", "rotate(0)")
+                    .attr("x", width - 50)
+                    .attr("dy", "1em")
+                    .attr("font", "10px")
+                    .attr("fill", "#000")
+                    .text("人数, （人）");
 
-              console.log(truedata)
-
-            //使用散点图显示真实人数
-              var scatter =   g.append("g")
-                    .attr("class","scatter-line");
+                console.log(truedata)
+                //使用面积图显示滤波人数
+                var linearea = g.append("g")
+                    .attr("class", "area");
+                linearea.append("path")
+                    .datum(filterdata.values)
+                    .attr("fill", d3.rgb(204, 204, 204))
+                    .attr("d", area);
+                //使用散点图显示真实人数
+                var scatter = g.append("g")
+                    .attr("class", "scatter-line");
 
                 scatter.selectAll(".point")
                     .data(truedata.values)
                     .enter()
                     .append("circle")
-                    .attr("class","point")
-                    .attr("cy",function (d) {
+                    .attr("class", "point")
+                    .attr("cy", function (d) {
                         return x(d.datetime)
                     })
-                    .attr("cx",function (d) {
+                    .attr("cx", function (d) {
                         return y(d.temperature)
                     })
-                    .attr("r",5);
+                    .attr("r", 2);
 
 
+                //画线
 
-
-              //画线
-
-              var city = g.selectAll(".city")
-                .data(cities)
-                .enter().append("g")
-                  .attr("class", "city");
+                var city = g.selectAll(".city")
+                    .data(cities)
+                    .enter().append("g")
+                    .attr("class", "city");
                 {#   每条线的属性和文字#}
-              city.append("path")
-                  .attr("class", "line")
-                  .attr("d", function(d) {return line(d.values); })//这里调用到了上面定义的line
-                  .style("stroke", function(d) { return z(d.id); });
+                city.append("path")
+                    .attr("class", "line")
+                    .attr("d", function (d) {
+                        return line(d.values);
+                    })//这里调用到了上面定义的line
+                    .style("stroke", function (d) {
+                        return z(d.id);
+                    });
 
-              city.append("rect")
-                  .attr("width",15)
-                  .attr("height",15)
-                  .attr("x",width - 120)
-                  .attr("y",function (d) {
-                      return d.num * 30;
-                  })
-                  .attr("fill",function(d) { return z(d.id); })
-                  .style("stroke", function(d) { return z(d.id); });
+                city.append("rect")
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("x", width - 120)
+                    .attr("y", function (d) {
+                        return d.num * 30;
+                    })
+                    .attr("fill", function (d) {
+                        return z(d.id);
+                    })
+                    .style("stroke", function (d) {
+                        return z(d.id);
+                    });
 
-              city.append("text")
-                  .datum(function(d) { return {id: d.id, value: d.num };})
-                  .attr("transform", function(d) { return "translate( "+ (width-100) +" ,"+ (d.value * 30+7) +")"; })
-                  .attr("x", 3)
-                  .attr("dy", "0.35em")
-                  .style("font", "15px sans-serif")
-                  .style("stroke", function(d) { return z(d.id); })
-                  .text(function(d) { return d.id; });
-
-
-
+                city.append("text")
+                    .datum(function (d) {
+                        return {id: d.id, value: d.num};
+                    })
+                    .attr("transform", function (d) {
+                        return "translate( " + (width - 100) + " ," + (d.value * 30 + 7) + ")";
+                    })
+                    .attr("x", 3)
+                    .attr("dy", "0.35em")
+                    .style("font", "15px sans-serif")
+                    .style("stroke", function (d) {
+                        return z(d.id);
+                    })
+                    .text(function (d) {
+                        return d.id;
+                    });
 
 
             });
-            }
-                function type(d, _, columns) {
-                  d.datetime = parseTime(d.datetime);
-                  for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
-                  return d;
-                }
 
-
-
-
+        }
+        function type(d, _, columns) {
+            d.datetime = parseTime(d.datetime);
+            for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+            return d;
+        }
 
 
     </script>
@@ -238,16 +300,18 @@
 {% block head %}
     {{ super() }}
     <style type="text/css">
-    .axis--x path {
-        display: none;
-    }
-    .bar:hover{
-        fill:rgb(120,120,153);
-    }
-    .line {
-      fill: none;
-      stroke: steelblue;
-      stroke-width: 1.5px;
-    }
+        .axis--x path {
+            display: none;
+        }
+
+        .bar:hover {
+            fill: rgb(120, 120, 153);
+        }
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
     </style>
 {% endblock %}
