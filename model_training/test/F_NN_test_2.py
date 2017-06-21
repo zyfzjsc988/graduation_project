@@ -100,11 +100,13 @@ for i in range(2):
 
             scaler = MinMaxScaler(feature_range=(0, 1))
             dataset = scaler.fit_transform(dataset)
-            train = dataset[:train_size]
-            test = dataset[train_size-look_back:len(dataset)]
+            sub_list = list(range(0,look_back+1))+list(range(look_back+test_size+1,len(dataset)))
+            print(sub_list)
+            train = dataset[sub_list]
+            test = dataset[look_back+1:look_back+1+test_size]
             print(len(train))
             if i == 1:
-                train_f, test_f = feature[:train_size], feature[train_size-look_back:len(dataset)]
+                train_f, test_f = feature[sub_list], feature[look_back+1:look_back+1+test_size]
                 trainX, trainY = creat_dataset(train, look_back, train_f)
                 testX, testY = creat_dataset(test, look_back, test_f)
             else:
@@ -162,6 +164,6 @@ for i in range(2):
 print(test_mae_list)
 output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'testoutput'))
 # 保存history文件
-json_file = open(output_path + '1'+'.json', 'w', encoding='utf-8')
+json_file = open(output_path + '5'+'.json', 'w', encoding='utf-8')
 json_file.write(json.dumps(test_mae_list))
 json_file.close()

@@ -14,18 +14,18 @@
 from flask import render_template, session, redirect, url_for,make_response
 from ..models import Modelhistory,Modelinfo,Place,db
 from . import main
-from .forms import SelectForm,SelectPlaceForm
+from .forms import SelectForm,SelectPlaceForm,SelectForecastForm
 import os
 history_file_path = "output/history"
 
 #
 # @main.route('/<filepath>')
-@main.route('/<path>')
-def today(path):
-    base_dir = os.path.dirname(__file__)
-    resp = make_response(open(os.path.join(base_dir, path)).read())
-    resp.headers["Content-type"]="application/json;charset=UTF-8"
-    return resp
+# @main.route('/<path>')
+# def today(path):
+#     base_dir = os.path.dirname(__file__)
+#     resp = make_response(open(os.path.join(base_dir, path)).read())
+#     resp.headers["Content-type"]="application/json;charset=UTF-8"
+#     return resp
 #
 # @main.before_app_first_request
 # def bf_app_request():
@@ -49,32 +49,6 @@ def index():
         session['matrix_path'] = ""
         # session['BP_name'] = ""
         session['placename'] = ""
-        # print(form.place.data)
-        # # 查询BP中type的数值最高的
-        # query_BP_by_place = Modelinfo.query.filter(Modelinfo.modelname.like(form.place.data + '_BP_%')).order_by(
-        #     db.desc(form.type.data)).first()
-        # # 继续查询绑定查询到的模型的 预测信息
-        # query_BPpredict_by_place = Predict.query.filter(Predict.modelname == query_BP_by_place.modelname).order_by(
-        #     Predict.datetime).all()
-        # # # 查询ELMAN中type的数值最高的
-        # # query_ELMAN_by_place = Modelinfo.query.filter(Modelinfo.modelname.like(form.place.data + '_ELMAN_%')).order_by(
-        # #     db.desc(form.type.data)).first()
-        # # session['log'].append("query_ELMAN_by_place.modelname:%s"%query_ELMAN_by_place.modelname)
-        # # query_ELMANpredict_by_place = Predict.query.filter(Predict.modelname == query_BP_by_place.modelname).order_by(
-        # #     Predict.datetime).all()
-        #
-        #
-        # # 查询真实人数数据
-        # query_true_by_place = Predict.query.filter(Predict.modelname.like(form.place.data + '_true%')).order_by(
-        #     Predict.datetime).all()
-        #
-        # datetime = []
-        # TRUE = []
-        # BP = []
-        # for k in range(len(query_true_by_place)):
-        #     datetime.append(query_true_by_place[k].datetime)
-        #     TRUE.append(query_true_by_place[k].peoplenum)
-        #     BP.append(query_BPpredict_by_place[k].peoplenum)
         session['matrix_path'] = url_for('static',filename="output/%s.csv" % (form.place.data) )
         # session['BP_name'] = query_BP_by_place.modelname
         session['placename'] = Place.query.filter(Place.id == form.place.data).first().placename
@@ -104,6 +78,7 @@ def show_info():
         session['pathlist'] =[]
         BP_name_list = []
         BP_list =  Modelinfo.query.filter(Modelinfo.modelname.like(form.place.data + '_BP_%')).all()
+        session['json_path'] = url_for('static', filename="output/history_%s.json" % (form.place.data))
         for item in BP_list:
             BP_name_list.append(item.modelname)
         session['pathlist']=BP_name_list
@@ -112,6 +87,17 @@ def show_info():
 
     return render_template('show_all.html',
                            form=form,
-                           placeno=session.get('place'),
                            placename=session.get('placename'),
+                           json_path = session.get('json_path'),
                            pathlist=session.get('pathlist'))
+@main.route('/forecast',methods=['GET','POST'])
+def forecast():
+    form = SelectPlaceForm()
+    form.place.choices = []
+    for item in Place.query.all():
+        form.place.choices.append((item.id, item.placename))
+    fform = SelectForecastForm()
+    return render_template('forecast.html'
+                           ,form=form,
+                           fform = fform
+                           )

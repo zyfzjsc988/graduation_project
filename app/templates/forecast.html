@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %} 杭州地铁客流预测系统-所有模型 {% endblock %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block page_content %}
+    {{ wtf.quick_form(form) }}
+
+    <div class="h1">您好，您所在的站点是<div style="color: red;"> 龙翔桥 </div></div>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>当前时间</th>
+            <th>当前该站点客流量</th>
+            <th>当前天气情况</th>
+            <th>是否节假日</th>
+            <th>是否周末</th>
+            <th>是否早晚高峰</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>2017/06/09 03:31:36</td>
+            <td>0</td>
+            <td>晴</td>
+            <td>否</td>
+            <td>否</td>
+            <td>否</td>
+        </tr>
+        </tbody>
+    </table>
+    {{ wtf.quick_form(fform) }}
+     <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>预测时间</th>
+            <th>预测该站点客流量</th>
+            <th>预测天气情况</th>
+            <th>是否节假日</th>
+            <th>是否周末</th>
+            <th>是否早晚高峰</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>2017/06/09 08:31:36</td>
+            <td>6</td>
+            <td>晴</td>
+            <td>否</td>
+            <td>否</td>
+            <td>是</td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+
+{% block body %}
+    {{ super() }}
+
+{% endblock %}

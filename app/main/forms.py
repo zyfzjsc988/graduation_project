@@ -24,6 +24,11 @@ class SelectForm(FlaskForm):
     #                             ("testloss", "test_loss")])
     submit = SubmitField("提交")
 
+
 class SelectPlaceForm(FlaskForm):
     place = SelectField("地点", choices=[("place1", "place1")])
+    submit = SubmitField("提交")
+
+class SelectForecastForm(FlaskForm):
+    hour = SelectField("你想预测几小时后的客流情况：",choices=[("1小时", "1小时"),("2小时","2小时"),("3小时","3小时"),("4小时","4小时"),("5小时","5小时")])
     submit = SubmitField("提交")

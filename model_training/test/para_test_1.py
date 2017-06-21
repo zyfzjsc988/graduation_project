@@ -74,21 +74,21 @@ i = 0
 # testX = numpy.reshape(testX,(testX.shape[0],look_back,1))
 #
 # # # reshape input to be [sample,time steps,features]
-trainX = numpy.reshape(trainX,(trainX.shape[0],trainX.shape[1],1))
-testX = numpy.reshape(testX,(testX.shape[0],trainX.shape[1],1))
+trainX = numpy.reshape(trainX,(trainX.shape[0],1,trainX.shape[1]))
+testX = numpy.reshape(testX,(testX.shape[0],1,testX.shape[1]))
 for o in opt:
     for activation in act:
         K.clear_session()
 
         # create and fit the LSTM network
         model = Sequential()
-        model.add(LSTM(5,input_dim= 1,activation=activation))
+        model.add(LSTM(5,input_dim= trainX.shape[2],activation=activation))
         model.add(Dense(1,activation='sigmoid'))
         model.compile(loss='mae',optimizer=o,metrics=['mae'])
         history = model.fit(trainX,trainY,nb_epoch=30,batch_size=1,verbose=2)
         cost = model.evaluate(testX,testY,batch_size=1,verbose=2)
 
-        #
+        # #
         # # reshape input to be [sample,time steps,features]
         # trainX = numpy.reshape(trainX,(trainX.shape[0],trainX.shape[1]))
         # testX = numpy.reshape(testX,(testX.shape[0],testX.shape[1]))
@@ -119,10 +119,12 @@ plt.xlabel('epoch')
 plt.ylabel('mean_absolute_error')
 plt.title('parameters comparing in RNN Network')
 # shift train predictions for plotting
-style = ['o-','^-','s-']
-color = ['g','r','b']
+style = ['o','^','s']
+color = ['-',':','--']
 for i in range(3):
     for j in range(3):
-        plt.plot(mae_list[i*3+j]['history'],style[i]+color[j],label=mae_list[i*3+j]['name'])
+        plt.plot(mae_list[i*3+j]['history'],style[i]+color[j],label=mae_list[i*3+j]['name'],color='k')
 plt.legend()
 plt.show()
+
+print(mae_list)
